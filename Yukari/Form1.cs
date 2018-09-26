@@ -14,8 +14,6 @@ namespace Yukari
     {
         private NotifyIcon tray = new NotifyIcon();
 
-        private KeyboardShortcuts.KeyboardShortcut savePositionsShortCut;
-        private KeyboardShortcuts.KeyboardShortcut restorePositionsShortCut;
         System.Timers.Timer timer = new System.Timers.Timer(60000);
 
         public Form1()
@@ -29,16 +27,23 @@ namespace Yukari
             timer.Start();
 
             InitializeComponent();
-            this.savePositionsShortCut = new KeyboardShortcuts.KeyboardShortcut(Keys.R, (Keys.Control | Keys.Shift), () =>
+
+            KeyboardShortcuts.Instance.Shortcuts.Add(new KeyboardShortcut(Settings.SHORTCUT_RESTOREPOSITIONS,
+                Keys.R, (Keys.Control | Keys.Shift), () =>
             {
                 WindowSetter.Instance.RestoreWindows();
-            });
-            this.restorePositionsShortCut = new KeyboardShortcuts.KeyboardShortcut(Keys.U, (Keys.Control | Keys.Shift), () =>
+            }, "Restore positions"));
+            KeyboardShortcuts.Instance.Shortcuts.Add(new KeyboardShortcut(Settings.SHORTCUT_SAVEPOSITIONS,
+                Keys.U, (Keys.Control | Keys.Shift), () =>
             {
                 WindowSetter.Instance.SaveWindowPositions();
-            });
-            KeyboardShortcuts.Instance.Shortcuts.Add(savePositionsShortCut);
-            KeyboardShortcuts.Instance.Shortcuts.Add(restorePositionsShortCut);
+            }, "Save positions"));
+            KeyboardShortcuts.Instance.Shortcuts.Add(new KeyboardShortcut(Settings.SHORTCUT_ENABLEDISABLE,
+                Keys.D, (Keys.Control | Keys.Shift), () =>
+            {
+                WindowSetter.Instance.Timer.Enabled = !WindowSetter.Instance.Timer.Enabled;
+            }, "Enable/disable"));
+
 
             Application.ApplicationExit += (Object sender, EventArgs e) =>
             {
@@ -50,7 +55,8 @@ namespace Yukari
 
             var settings = new MenuItem("Settings", (Object sender, EventArgs e) =>
             {
-                
+                var settingsForm = new SettingsForm();
+                settingsForm.Show();
             });
             tray.ContextMenu.MenuItems.Add(settings);
 

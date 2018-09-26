@@ -38,6 +38,7 @@ namespace Yukari
 
         public System.Timers.Timer Timer { get; set; }
 
+
         static WindowSetter()
         {
             instance = new WindowSetter();

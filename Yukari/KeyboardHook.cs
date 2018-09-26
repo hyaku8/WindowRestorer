@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace Yukari
 {
-    class KeyboardHook
+    public class KeyboardHook
     {
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;

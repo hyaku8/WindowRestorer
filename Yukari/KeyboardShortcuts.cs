@@ -5,98 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
 namespace Yukari
 {
     class KeyboardShortcuts
     {
-        public class KeyboardShortcut
-        {
-            public delegate void ShortcutAction();
-
-            ~KeyboardShortcut()
-            {
-                if (KeyboardHook.Instance != null)
-                    KeyboardHook.Instance.KeyDown -= this.Binding;
-            }
-
-            public KeyboardShortcut(Keys key, Keys modifiers, ShortcutAction action, bool enabled)
-            {
-                this.key = key;
-                this.modifiers = modifiers;
-                this.Action = action;
-                this.UpdateHandler();
-                this.Enabled = enabled;
-            }
-
-            public KeyboardShortcut(Keys key, Keys modifiers, ShortcutAction action)
-            {
-                this.key = key;
-                this.modifiers = modifiers;
-                this.Action = action;
-                this.UpdateHandler();
-                this.Enabled = true;
-            }
-
-            public ShortcutAction Action { get; set; }
-            private Keys key;
-            public Keys Key
-            {
-                get
-                {
-                    return key;
-                }
-                set
-                {
-                    this.key = value;
-                    UpdateHandler();
-                }
-            }
-            private Keys modifiers;
-            public Keys Modifiers
-            {
-                get
-                {
-                    return modifiers;
-                }
-                set
-                {
-                    this.modifiers = value;
-                    UpdateHandler();
-                }
-            }
-
-            public bool Enabled { get; set; }
-
-            public KeyboardHook.KeyDownEventHandler Binding { get; private set; }
-
-            public void UpdateHandler()
-            {
-                if (this.Binding != null)
-                {
-                    try
-                    {
-                        KeyboardHook.Instance.KeyDown -= this.Binding;
-                    }
-                    catch { }
-                }
-                this.Binding = new KeyboardHook.KeyDownEventHandler((object sender, KeyboardHook.KeyDownEventArgs eventArgs) =>
-                {
-                    if (this.Enabled && this.Action != null && eventArgs.Key == this.key && eventArgs.ModifierKeys == this.modifiers)
-                    {
-                        this.Action();
-                    }
-                });
-                KeyboardHook.Instance.KeyDown += this.Binding;
-            }
-
-            public void Dispose()
-            {
-                throw new NotImplementedException();
-            }
-        }
 
         public List<KeyboardShortcut> Shortcuts { get; private set; }
-
 
         private KeyboardShortcuts()
         {
@@ -127,9 +42,39 @@ namespace Yukari
         public delegate void ShortcutRecordedEventHandler(object sender, ShortcutRecorderEventArgs eventArgs);
         public event ShortcutRecordedEventHandler ShortcutRecorded;
 
-        public void Record(KeyboardShortcut.ShortcutAction action)
+
+        private KeyboardShortcut recordedShortcut;
+        private bool[] preserveState;
+        public void StopRecording()
         {
-            bool[] preserveState = new bool[Shortcuts.Count];
+            KeyboardShortcut old = this.Shortcuts.FirstOrDefault(x => x.Id == this.recordedShortcut.Id);
+            if (old != null)
+            {
+                this.recordedShortcut.Label = old.Label;
+                this.Shortcuts.Remove(old);
+                old = null;
+            }
+
+            this.ShortcutRecorded(this, new ShortcutRecorderEventArgs()
+            {
+                Shortcut = recordedShortcut
+            });
+
+            for (int i = 0; i < Shortcuts.Count; i++)
+            {
+                Shortcuts[i].Enabled = preserveState[i];
+            }
+            this.recordedShortcut.Enabled = true;
+            this.Shortcuts.Add(this.recordedShortcut);
+            this.recordedShortcut = null;
+            this.preserveState = null;
+            GC.Collect();
+        }
+
+
+        public void Record(string id, KeyboardShortcut.ShortcutAction action)
+        {
+            this.preserveState = new bool[Shortcuts.Count];
             for (int i = 0; i < Shortcuts.Count; i++)
             {
                 preserveState[i] = Shortcuts[i].Enabled;
@@ -138,19 +83,18 @@ namespace Yukari
             KeyboardHook.KeyDownEventHandler recorder = null;
             recorder = new KeyboardHook.KeyDownEventHandler((object sender, KeyboardHook.KeyDownEventArgs e) =>
             {
-                KeyboardShortcut shortcut = new KeyboardShortcut(e.Key, e.ModifierKeys, action);
-                this.ShortcutRecorded(this, new ShortcutRecorderEventArgs()
-                {
-                    Shortcut = shortcut
-                });
                 KeyboardHook.Instance.KeyDown -= recorder;
+                if(this.recordedShortcut == null)
+                {
+                    this.recordedShortcut = new KeyboardShortcut(id, e.Key, e.ModifierKeys, action, false);
+                }
+                else
+                {
+                    this.recordedShortcut.Key = e.Key;
+                    this.recordedShortcut.Modifiers = e.ModifierKeys;
+                }
             });
             KeyboardHook.Instance.KeyDown += recorder;
-
-            for (int i = 0; i < Shortcuts.Count; i++)
-            {
-                Shortcuts[i].Enabled = preserveState[i];
-            }
         }
     }
 
