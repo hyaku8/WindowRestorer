@@ -38,6 +38,20 @@ namespace Yukari
 
         public System.Timers.Timer Timer { get; set; }
 
+        private bool active;
+        public bool Active
+        {
+            get
+            {
+                return active;
+            }
+            set
+            {
+                active = value;
+                Timer.Enabled = value;
+            }
+        }
+
 
         static WindowSetter()
         {
@@ -89,18 +103,21 @@ namespace Yukari
     
         public void RestoreWindows()
         {
-            foreach (KeyValuePair<IntPtr, SavedPosition> w in this.windows)
+            if (active)
             {
-                Rect rect = w.Value.Rect;
-                int x = rect.Left;
-                int y = rect.Top;
-                MoveWindow(w.Key, x, y, -1 *(x - rect.Right), -1 * (y - rect.Bottom), true);
-                if (w.Value.Maximized)
+                foreach (KeyValuePair<IntPtr, SavedPosition> w in this.windows)
                 {
-                    ShowWindow(w.Key, SW_SHOWMAXIMIZED);
+                    Rect rect = w.Value.Rect;
+                    int x = rect.Left;
+                    int y = rect.Top;
+                    MoveWindow(w.Key, x, y, -1 * (x - rect.Right), -1 * (y - rect.Bottom), true);
+                    if (w.Value.Maximized)
+                    {
+                        ShowWindow(w.Key, SW_SHOWMAXIMIZED);
+                    }
                 }
+                Timer?.Start();
             }
-            Timer?.Start();
         }
 
         private void onDisplayChanging(object sender, EventArgs e)

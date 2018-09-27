@@ -13,7 +13,7 @@ namespace Yukari
     public partial class ShortcutControl : UserControl
     {
         private KeyboardShortcut _shortcut;
-        private bool recording;
+        public bool Recording { get; set; }
         public KeyboardShortcut Shortcut
         {
             get
@@ -42,7 +42,7 @@ namespace Yukari
 
         public void OnKeyDown(object sender, KeyboardHook.KeyDownEventArgs ea)
         {
-            if(this.recording)
+            if(this.Recording)
             {
                 this.Shortcut.Key = ea.Key;
                 this.Shortcut.Modifiers = ea.ModifierKeys;
@@ -50,19 +50,24 @@ namespace Yukari
             }
         }
 
+        public void SaveRecording()
+        {
+            this.Recording = false;
+            KeyboardShortcuts.Instance.StopRecording();
+            this.button1.Text = "Record";
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
-            if(!this.recording)
+            if(!this.Recording)
             {
-                this.recording = true;
+                this.Recording = true;
                 KeyboardShortcuts.Instance.Record(this.Shortcut.Id, this.Shortcut.Action);
                 this.button1.Text = "Done";
             }
             else
             {
-                this.recording = false;
-                KeyboardShortcuts.Instance.StopRecording();
-                this.button1.Text = "Record";
+                SaveRecording();
             }
         }
     }
