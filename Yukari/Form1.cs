@@ -63,7 +63,7 @@ namespace Yukari
         private void InitContextMenu()
         {
             tray.Visible = true;
-            tray.Icon = new Icon(SystemIcons.Application, 40, 40);
+            tray.Icon = Yukari.Properties.Resources.yukari_icon;
             tray.ContextMenu = new ContextMenu();
 
             enableDisable = new MenuItem("Enabled", (Object sender, EventArgs e) =>

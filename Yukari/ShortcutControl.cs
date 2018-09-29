@@ -40,6 +40,15 @@ namespace Yukari
             this.label.Text = Shortcut.Label;
         }
 
+        public class ShortcutRecordedEventArgs : EventArgs
+        {
+            public KeyboardShortcut Shortcut;
+        }
+        public delegate void ShortcutRecordedEventHandler(object sender, ShortcutRecordedEventArgs eventArgs);
+        public event ShortcutRecordedEventHandler ShortcutRecorded;
+        
+
+     
         public void OnKeyDown(object sender, KeyboardHook.KeyDownEventArgs ea)
         {
             if(this.Recording)
@@ -54,6 +63,10 @@ namespace Yukari
         {
             this.Recording = false;
             KeyboardShortcuts.Instance.StopRecording();
+            this.ShortcutRecorded(this, new ShortcutRecordedEventArgs()
+            {
+                Shortcut = this.Shortcut
+            });
             this.button1.Text = "Record";
         }
 

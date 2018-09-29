@@ -35,40 +35,42 @@ namespace Yukari
             }
         }
 
-        public class ShortcutRecorderEventArgs : EventArgs
+
+        public void AddOrUpdate(KeyboardShortcut shortcut)
         {
-            public KeyboardShortcut Shortcut;
+            KeyboardShortcut old = this.Shortcuts.FirstOrDefault(x => x.Id == shortcut.Id);
+            if (old != null)
+            {
+                shortcut.Label = old.Label;
+                this.Shortcuts.Remove(old);
+                old = null;
+            }
+            this.Shortcuts.Add(shortcut);
+            GC.Collect();
         }
-        public delegate void ShortcutRecordedEventHandler(object sender, ShortcutRecorderEventArgs eventArgs);
-        public event ShortcutRecordedEventHandler ShortcutRecorded;
 
 
         private KeyboardShortcut recordedShortcut;
         private bool[] preserveState;
         public void StopRecording()
         {
-            KeyboardShortcut old = this.Shortcuts.FirstOrDefault(x => x.Id == this.recordedShortcut.Id);
+            /*KeyboardShortcut old = this.Shortcuts.FirstOrDefault(x => x.Id == this.recordedShortcut.Id);
             if (old != null)
             {
                 this.recordedShortcut.Label = old.Label;
                 this.Shortcuts.Remove(old);
                 old = null;
-            }
-
-            this.ShortcutRecorded(this, new ShortcutRecorderEventArgs()
-            {
-                Shortcut = recordedShortcut
-            });
+            }*/
 
             for (int i = 0; i < Shortcuts.Count; i++)
             {
                 Shortcuts[i].Enabled = preserveState[i];
             }
-            this.recordedShortcut.Enabled = true;
+            /*this.recordedShortcut.Enabled = true;
             this.Shortcuts.Add(this.recordedShortcut);
             this.recordedShortcut = null;
             this.preserveState = null;
-            GC.Collect();
+            GC.Collect();*/
         }
 
 
@@ -80,7 +82,7 @@ namespace Yukari
                 preserveState[i] = Shortcuts[i].Enabled;
                 Shortcuts[i].Enabled = false;
             }
-            KeyboardHook.KeyDownEventHandler recorder = null;
+           /* KeyboardHook.KeyDownEventHandler recorder = null;
             recorder = new KeyboardHook.KeyDownEventHandler((object sender, KeyboardHook.KeyDownEventArgs e) =>
             {
                 KeyboardHook.Instance.KeyDown -= recorder;
@@ -94,7 +96,7 @@ namespace Yukari
                     this.recordedShortcut.Modifiers = e.ModifierKeys;
                 }
             });
-            KeyboardHook.Instance.KeyDown += recorder;
+            KeyboardHook.Instance.KeyDown += recorder;*/
         }
     }
 

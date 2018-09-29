@@ -15,7 +15,6 @@ namespace Yukari
         public SettingsForm()
         {
             InitializeComponent();
-            KeyboardShortcuts.Instance.ShortcutRecorded += this.OnShortcutRecorded;
             UpdateControls();
 
             this.FormClosing += (object sender, FormClosingEventArgs ea) =>
@@ -36,11 +35,6 @@ namespace Yukari
             }
         }
 
-        ~SettingsForm()
-        {
-            KeyboardShortcuts.Instance.ShortcutRecorded -= this.OnShortcutRecorded;
-        }
-
         private void UpdateControls()
         {
             this.tableLayoutPanel1.Controls.Clear();
@@ -48,15 +42,17 @@ namespace Yukari
             foreach(KeyboardShortcut keyboardShortcut in KeyboardShortcuts.Instance.Shortcuts)
             {
                 ShortcutControl scc = new ShortcutControl(keyboardShortcut);
+                scc.ShortcutRecorded += this.OnShortcutRecorded;
                 tableLayoutPanel1.Controls.Add(scc);
             }
 
             Update();
         }
 
-        private void OnShortcutRecorded(object sender, KeyboardShortcuts.ShortcutRecorderEventArgs ea)
+        private void OnShortcutRecorded(object sender, ShortcutControl.ShortcutRecordedEventArgs ea)
         {
             int settingValue = (int)(ea.Shortcut.Modifiers | (Keys.KeyCode & ea.Shortcut.Key));
+            KeyboardShortcuts.Instance.AddOrUpdate(ea.Shortcut);
             switch (ea.Shortcut.Id)
             {
                 case Settings.SHORTCUT_ENABLEDISABLE:
@@ -71,11 +67,14 @@ namespace Yukari
                 default:
                     break;
             }
+            Properties.Settings.Default.Save();
+
         }
 
         private void saveButton_Click(object sender, EventArgs e)
         {
             Save();
+            this.Close();
         }
     }
 }
